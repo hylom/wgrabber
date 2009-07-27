@@ -51,7 +51,7 @@ class WikiGrabber(object):
             html = self.grab_by_get(url)
             output_path = self.get_config("output_dir") + "/" + url.replace(self.get_config("prefix"), "", 1)
             if output_path[-1] == "/":
-               output_path = output_path + "__index__"
+                output_path = output_path + "__index__"
 
             for (target, char) in self.get_config("filename_subst_rule"):
                 output_path = output_path.replace(target, char)
@@ -61,11 +61,16 @@ class WikiGrabber(object):
             f.write(html)
             f.close()
 
+
             # extract links from html
             anchors = self.extract_anchors(html, url)
             for anchor in anchors:
                 self._append_download_list(anchor)
-        
+
+            # call callback function
+            if self._config.has_key("callback"):
+                self._config["callback"](self, url, html)
+                
             # next
             url = self._get_next_download_url()
 

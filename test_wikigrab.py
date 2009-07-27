@@ -3,6 +3,7 @@
 import unittest
 import os.path
 import wikigrab
+import codecs
 
 class TestSequenceFunctions(unittest.TestCase):
     def setUp(self):
@@ -107,11 +108,29 @@ foo bar hoge hoge"""
             (r"^(.*)\?.*$", r"\1"),
             (r"^(.*)\#.*$", r"\1"),
             ]
+        config["callback"] = f_callback
 
 
         grabber = wikigrab.WikiGrabber(config)
         grabber.run()
         
+
+def f_callback(grabber, url, html):
+    params = dict(do="edit", rev="", submit="Show pagesource")
+    src_html = grabber.grab_by_post(url, params)
+    src = grabber.get_content_by_id("wiki__text", src_html)
+    output_path = grabber.get_config("output_dir") + "/" + url.replace(grabber.get_config("prefix"), "", 1)
+    if output_path[-1] == "/":
+        output_path = output_path + "__index__"
+    for (target, char) in grabber.get_config("filename_subst_rule"):
+        output_path = output_path.replace(target, char)
+
+    output_path = output_path + ".txt"
+    f = codecs.open(output_path, "w", "utf_8")
+    f.write(src)
+    f.close()
+
+
 
 # do unittest
 suite = unittest.TestLoader().loadTestsFromTestCase(TestSequenceFunctions)
